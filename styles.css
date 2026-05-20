@@ -46,6 +46,7 @@ html, body{ margin:0; padding:0; background:#0B1E2A; height: 100%; }
 body{
   display: flex;
   flex-direction: column;
+  height: 100vh;             /* fallback para navegadores sin dvh */
   height: 100dvh;            /* alto real del viewport en celulares */
   overflow: hidden;
   overscroll-behavior: none; /* sin "rebote" al hacer swipe */
@@ -105,6 +106,9 @@ body{
   gap: 12px;
   transition: transform 120ms ease, background-color 120ms ease, opacity 120ms ease;
   min-height: 56px;
+  min-width: 0;          /* puede encogerse dentro de su columna */
+  max-width: 100%;
+  overflow: hidden;
   white-space: nowrap;
 }
 .nav-btn.prev{ justify-self: start; padding: 18px 28px 18px 22px; }
@@ -204,6 +208,18 @@ body{
   .nav-bar{ padding: 18px 28px; }
   .nav-btn{ font-size: 18px; padding: 14px 22px; min-height: 48px; }
   .nav-counter{ font-size: 18px; }
+}
+
+/* Celulares angostos: achico la barra para que los dos botones siempre entren */
+@media (max-width: 430px){
+  .nav-bar{ gap: 8px; padding: 10px 12px calc(10px + env(safe-area-inset-bottom)); }
+  .nav-btn{ font-size: 17px; padding: 14px 16px; min-height: 50px; gap: 8px; }
+  .nav-btn.prev{ padding: 14px 18px 14px 14px; }
+  .nav-btn.next{ padding: 14px 14px 14px 18px; }
+  .nav-counter{ font-size: 17px; padding: 0 4px; }
+}
+@media (max-width: 360px){
+  .nav-btn{ font-size: 15px; padding: 12px 12px; }
 }
 
 .deck-canvas > section{

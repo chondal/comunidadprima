@@ -119,9 +119,19 @@
   }, { passive: true });
 
   /* ── Reescalado ante cambios de tamaño / orientación ────────────────── */
+  // En móvil el alto del viewport (100dvh) y la barra de URL se resuelven
+  // recién después del parse; un solo cálculo al inicio puede salir mal.
+  // El ResizeObserver recalcula en cuanto el .stage tiene su tamaño real y
+  // ante cualquier cambio posterior (rotación, barra de URL que aparece/
+  // desaparece, teclado), que es lo que rompía la vista en el celular.
   window.addEventListener('resize', fit);
   window.addEventListener('orientationchange', fit);
+  window.addEventListener('load', fit);
   if (window.visualViewport) window.visualViewport.addEventListener('resize', fit);
+  if (window.ResizeObserver) {
+    new ResizeObserver(fit).observe(stage);
+  }
+  requestAnimationFrame(fit);
 
   /* ── Arranque ───────────────────────────────────────────────────────── */
   // La primera lámina aparece sin animación de entrada.
