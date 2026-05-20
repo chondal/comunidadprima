@@ -43,9 +43,36 @@
 
 *{ box-sizing: border-box; }
 html, body{ margin:0; padding:0; background:#0B1E2A; height: 100%; }
-body{ display: flex; flex-direction: column; }
+body{
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;            /* alto real del viewport en celulares */
+  overflow: hidden;
+  overscroll-behavior: none; /* sin "rebote" al hacer swipe */
+  -webkit-tap-highlight-color: transparent;
+}
 
-deck-stage{ background:#0B1E2A; flex: 1 1 auto; min-height: 0; }
+/* Área de proyección: ocupa todo el alto menos la barra de navegación */
+.stage{
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  background: #0B1E2A;
+  touch-action: pan-y;       /* deja pasar el swipe horizontal propio */
+}
+
+/* Lienzo a tamaño de diseño (1080×1920), centrado y escalado por JS para
+   llenar el ancho del celular sin recortar contenido. */
+.deck-canvas{
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 1080px;
+  height: 1920px;
+  transform: translate(-50%, -50%) scale(var(--deck-scale, 0.4));
+  transform-origin: center center;
+}
 
 /* ── Bottom nav bar (siempre visible) ──────────────────────── */
 .nav-bar{
@@ -117,9 +144,6 @@ deck-stage{ background:#0B1E2A; flex: 1 1 auto; min-height: 0; }
 .nav-counter .total{ color: #8AA0B0; font-weight: 500; }
 .nav-counter .sep{ color: #2B475A; margin: 0 6px; }
 
-/* Hide deck-stage's built-in overlay (count/prev/next/reset) — we provide our own */
-deck-stage::part(overlay){ display: none; }
-
 /* ── Big tap-to-join CTA (en slides) ─────────────────────────── */
 .join-cta{
   display: block;
@@ -182,7 +206,11 @@ deck-stage::part(overlay){ display: none; }
   .nav-counter{ font-size: 18px; }
 }
 
-deck-stage > section{
+.deck-canvas > section{
+  position: absolute;
+  inset: 0;
+  width: 1080px;
+  height: 1920px;
   background: var(--bg);
   color: var(--ink);
   font-family: 'Archivo', system-ui, sans-serif;
@@ -193,6 +221,36 @@ deck-stage > section{
   display: flex;
   flex-direction: column;
   overflow: hidden;
+
+  /* Estado por defecto: oculta, fuera de pantalla del lado de entrada */
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  z-index: 1;
+  transform: translateX(var(--enter, 60px));
+  transition:
+    opacity .42s ease,
+    transform .42s cubic-bezier(.22,.61,.36,1),
+    visibility 0s linear .42s;  /* la oculta recién al terminar el fade */
+}
+.deck-canvas > section.is-active{
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: none;
+  z-index: 2;
+  transition:
+    opacity .42s ease,
+    transform .42s cubic-bezier(.22,.61,.36,1),
+    visibility 0s;
+}
+
+@media (prefers-reduced-motion: reduce){
+  .deck-canvas > section{
+    transition: opacity .2s ease, visibility 0s linear .2s;
+    transform: none !important;
+  }
+  .deck-canvas > section.is-active{ transition: opacity .2s ease, visibility 0s; }
 }
 
 /* ── Slide chrome ───────────────────────────────────────────── */

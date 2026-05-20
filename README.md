@@ -34,7 +34,7 @@ a `main` construye y publica el sitio en GitHub Pages.
 
 - `index.html` — la presentación (17 láminas).
 - `styles.css` — estilos (sistema visual DICOP: navy / amarillo / cyan).
-- `deck-stage.js` — motor de navegación / escalado / impresión.
+- `deck.js` — motor mobile-first: escalado a pantalla, animaciones, botones, swipe y teclado.
 - `assets/prima-logo.png` — logo del edificio.
 - `.nojekyll` — evita que GitHub Pages procese el sitio con Jekyll.
 - `.github/workflows/deploy.yml` — deploy automático a Pages.
