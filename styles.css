@@ -51,6 +51,14 @@ body{
   overflow: hidden;
   overscroll-behavior: none; /* sin "rebote" al hacer swipe */
   -webkit-tap-highlight-color: transparent;
+  touch-action: none;        /* ningún gesto del navegador: ni zoom ni scroll */
+  -webkit-user-select: none;
+  user-select: none;
+  position: fixed;           /* fija la página al marco; nada se desplaza */
+  inset: 0;
+  width: 100%;
+  -webkit-text-size-adjust: 100%; /* iOS no reajusta tamaños de texto */
+  text-size-adjust: 100%;
 }
 
 /* Área de proyección: ocupa todo el alto menos la barra de navegación */
@@ -60,7 +68,7 @@ body{
   min-height: 0;
   overflow: hidden;
   background: #0B1E2A;
-  touch-action: pan-y;       /* deja pasar el swipe horizontal propio */
+  touch-action: none;        /* sin scroll ni zoom; el swipe lo maneja el JS */
 }
 
 /* Lienzo a tamaño de diseño (1080×1920), centrado y escalado por JS para
@@ -74,6 +82,65 @@ body{
   transform: translate(-50%, -50%) scale(var(--deck-scale, 0.4));
   transform-origin: center center;
 }
+
+/* ── Top bar: selector de tamaño de texto ──────────────────── */
+.top-bar{
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: calc(8px + env(safe-area-inset-top)) 16px 8px;
+  background: var(--azul);
+  border-bottom: 1px solid #2B475A;
+  font-family: 'Archivo', system-ui, sans-serif;
+  user-select: none;
+}
+.tb-label{
+  color: #8AA0B0;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+.fs-buttons{ display: flex; gap: 8px; }
+.fs-btn{
+  appearance: none;
+  border: 2px solid transparent;
+  background: #1E3D50;
+  color: #E8EEF2;
+  width: 46px;
+  height: 40px;
+  border-radius: 10px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  font-family: inherit;
+  font-weight: 700;
+  padding: 0;
+  touch-action: manipulation;
+  transition: background-color .12s ease, border-color .12s ease, color .12s ease, transform .12s ease;
+}
+.fs-btn:active{ transform: scale(0.96); }
+.fs-btn.is-active{
+  background: var(--cyan);
+  color: var(--azul);
+  border-color: var(--cyan);
+}
+
+/* ── Modo texto grande (Medio / Grande): scroll vertical y marco limpio ── */
+body.fs-zoom .brand-mark,
+body.fs-zoom .page-no,
+body.fs-zoom .footer-rule{ display: none; }
+body.fs-zoom .deck-canvas > section.is-active{
+  overflow-y: auto;
+  touch-action: pan-y;          /* permite scroll vertical del contenido */
+  -webkit-overflow-scrolling: touch;
+}
+/* Oculto la barra de scroll (el contenido sigue desplazándose) */
+.deck-canvas > section{ scrollbar-width: none; }
+.deck-canvas > section::-webkit-scrollbar{ width: 0; height: 0; }
 
 /* ── Bottom nav bar (siempre visible) ──────────────────────── */
 .nav-bar{
@@ -95,24 +162,25 @@ body{
   color: var(--azul);
   font-family: inherit;
   font-weight: 700;
-  font-size: 22px;
+  font-size: 18px;
   letter-spacing: 0.02em;
-  padding: 18px 24px;
+  padding: 12px 20px;
   border-radius: 999px;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 10px;
   transition: transform 120ms ease, background-color 120ms ease, opacity 120ms ease;
-  min-height: 56px;
+  min-height: 46px;
   min-width: 0;          /* puede encogerse dentro de su columna */
   max-width: 100%;
   overflow: hidden;
   white-space: nowrap;
+  touch-action: manipulation; /* tap inmediato, sin doble-tap-zoom */
 }
-.nav-btn.prev{ justify-self: start; padding: 18px 28px 18px 22px; }
-.nav-btn.next{ justify-self: end; padding: 18px 22px 18px 28px; }
+.nav-btn.prev{ justify-self: start; padding: 12px 22px 12px 18px; }
+.nav-btn.next{ justify-self: end; padding: 12px 18px 12px 22px; }
 .nav-btn:hover{ background: #E6B800; border-color: #E6B800; }
 .nav-btn:active{ transform: scale(0.97); }
 .nav-btn:disabled{
@@ -139,11 +207,11 @@ body{
 
 .nav-counter{
   font-weight: 700;
-  font-size: 22px;
+  font-size: 18px;
   letter-spacing: 0.04em;
   color: var(--cyan);
   font-variant-numeric: tabular-nums;
-  padding: 0 12px;
+  padding: 0 10px;
 }
 .nav-counter .total{ color: #8AA0B0; font-weight: 500; }
 .nav-counter .sep{ color: #2B475A; margin: 0 6px; }
@@ -210,16 +278,20 @@ body{
   .nav-counter{ font-size: 18px; }
 }
 
-/* Celulares angostos: achico la barra para que los dos botones siempre entren */
+/* Celulares angostos: achico aún más para que los dos botones siempre entren */
 @media (max-width: 430px){
-  .nav-bar{ gap: 8px; padding: 10px 12px calc(10px + env(safe-area-inset-bottom)); }
-  .nav-btn{ font-size: 17px; padding: 14px 16px; min-height: 50px; gap: 8px; }
-  .nav-btn.prev{ padding: 14px 18px 14px 14px; }
-  .nav-btn.next{ padding: 14px 14px 14px 18px; }
-  .nav-counter{ font-size: 17px; padding: 0 4px; }
+  .nav-bar{ gap: 8px; padding: 8px 12px calc(8px + env(safe-area-inset-bottom)); }
+  .nav-btn{ font-size: 16px; padding: 11px 16px; min-height: 44px; gap: 8px; }
+  .nav-btn.prev{ padding: 11px 18px 11px 14px; }
+  .nav-btn.next{ padding: 11px 14px 11px 18px; }
+  .nav-counter{ font-size: 16px; padding: 0 4px; }
+  .top-bar{ padding: calc(6px + env(safe-area-inset-top)) 12px 6px; }
+  .tb-label{ font-size: 13px; }
+  .fs-btn{ width: 42px; height: 38px; }
 }
 @media (max-width: 360px){
-  .nav-btn{ font-size: 15px; padding: 12px 12px; }
+  .nav-btn{ font-size: 15px; padding: 10px 13px; }
+  .tb-label{ display: none; }   /* en pantallas muy chicas, solo las A */
 }
 
 .deck-canvas > section{

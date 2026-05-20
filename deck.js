@@ -44,6 +44,8 @@
     var cur = slides[index];
     var nxt = slides[target];
 
+    // La entrante arranca siempre desde arriba (importante en modo texto grande).
+    nxt.scrollTop = 0;
     // La entrante aparece desde el lado hacia el que vamos…
     nxt.style.setProperty('--enter', dir > 0 ? '60px' : '-60px');
     // …y forzamos un reflow para fijar esa posición inicial antes de animar.
@@ -118,6 +120,64 @@
     }
   }, { passive: true });
 
+  /* ── Tamaño de texto (Normal / Medio / Grande) ──────────────────────── */
+  // Multiplica el tamaño de TODO el texto (incluye estilos inline) sobre su
+  // valor original cacheado. En modos > 1 el body recibe la clase .fs-zoom,
+  // que habilita el scroll vertical de la lámina (ver styles.css) para que el
+  // texto más grande nunca se recorte.
+  var FS_KEY = 'prima.fs';
+  var fsBtns = Array.prototype.slice.call(document.querySelectorAll('.fs-btn'));
+  var textEls = null;
+
+  function ensureFontBase() {
+    if (textEls) return;
+    textEls = canvas.querySelectorAll('*');
+    for (var i = 0; i < textEls.length; i++) {
+      textEls[i].__baseFs = parseFloat(getComputedStyle(textEls[i]).fontSize) || 0;
+    }
+  }
+
+  function applyFont(factor) {
+    ensureFontBase();
+    var reset = Math.abs(factor - 1) < 0.001;
+    for (var i = 0; i < textEls.length; i++) {
+      var b = textEls[i].__baseFs;
+      if (!b) continue;
+      textEls[i].style.fontSize = reset ? '' : (b * factor).toFixed(2) + 'px';
+    }
+    document.body.classList.toggle('fs-zoom', !reset);
+    if (slides[index]) slides[index].scrollTop = 0;
+  }
+
+  function setFs(factor, persist) {
+    fsBtns.forEach(function (b) {
+      var on = Math.abs(parseFloat(b.getAttribute('data-fs')) - factor) < 0.001;
+      b.classList.toggle('is-active', on);
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+    applyFont(factor);
+    if (persist) { try { localStorage.setItem(FS_KEY, String(factor)); } catch (e) {} }
+  }
+
+  fsBtns.forEach(function (b) {
+    b.addEventListener('click', function () {
+      setFs(parseFloat(b.getAttribute('data-fs')), true);
+    });
+  });
+
+  /* ── Bloqueo total de zoom (la pantalla queda fija al marco) ────────── */
+  // iOS Safari ignora user-scalable=no, así que cancelamos a mano:
+  //  · gesturestart/change/end → pellizco (pinch) de dos dedos.
+  //  · touchmove con 2+ dedos  → pellizco en navegadores que no usan gesture*.
+  //  · dblclick                → zoom por doble toque (apretar 2 veces un botón).
+  ['gesturestart', 'gesturechange', 'gestureend'].forEach(function (ev) {
+    document.addEventListener(ev, function (e) { e.preventDefault(); }, { passive: false });
+  });
+  document.addEventListener('touchmove', function (e) {
+    if (e.touches.length > 1) e.preventDefault();
+  }, { passive: false });
+  document.addEventListener('dblclick', function (e) { e.preventDefault(); }, { passive: false });
+
   /* ── Reescalado ante cambios de tamaño / orientación ────────────────── */
   // En móvil el alto del viewport (100dvh) y la barra de URL se resuelven
   // recién después del parse; un solo cálculo al inicio puede salir mal.
@@ -139,6 +199,11 @@
   slides[0].classList.add('is-active');
   void slides[0].offsetWidth;
   slides[0].style.transition = '';
+
+  // Tamaño de texto recordado (default: Normal).
+  var savedFs = 1;
+  try { var sv = localStorage.getItem(FS_KEY); if (sv) savedFs = parseFloat(sv) || 1; } catch (e) {}
+  setFs(savedFs, false);
 
   fit();
   updateChrome();
