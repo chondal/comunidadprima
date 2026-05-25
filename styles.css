@@ -526,7 +526,7 @@ p{ margin:0; }
 /* ── Decision matrix ────────────────────────────────────────── */
 .decision{
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 32px;
   margin-top: 16px;
 }
